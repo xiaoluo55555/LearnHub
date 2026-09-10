@@ -1,0 +1,11 @@
+name = "learnhub"
+compatibility_date = "2026-09-10"
+pages_build_output_dir = "."
+
+[vars]
+LEARNHUB_VERSION = "2026.09.10"
+
+# Use `wrangler pages secret put` for these values; never commit them.
+# SUPABASE_URL
+# SUPABASE_ANON_KEY
+# SUPABASE_SERVICE_ROLE_KEY
