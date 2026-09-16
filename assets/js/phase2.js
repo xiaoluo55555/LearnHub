@@ -568,7 +568,7 @@ return String(word.word || "").slice(0, 2) + "\u00b7\u00b7\u00b7\u00b7";    }
     return cloudClient;
   }
 
-  /* Always talks to the auth server. Public entry point for sign-in / sign-out. */
+  /* Restores the persisted local session without discarding it on transient errors. */
   async function refreshCloudUser() {
     const client = await ensureCloudClient();
     if (!client) {
@@ -578,10 +578,10 @@ return String(word.word || "").slice(0, 2) + "\u00b7\u00b7\u00b7\u00b7";    }
     }
     cloudUserResolvedAt = Date.now();
     try {
-      const userResult = await client.auth.getUser();
-      cloudUser = userResult?.data?.user || null;
+      const sessionResult = await client.auth.getSession();
+      cloudUser = sessionResult?.data?.session?.user || null;
     } catch (error) {
-      cloudUser = null;
+      /* Keep the last known local session through transient auth/network failures. */
     }
     return cloudUser;
   }
@@ -608,13 +608,14 @@ return String(word.word || "").slice(0, 2) + "\u00b7\u00b7\u00b7\u00b7";    }
 
   async function loadCloudWordStates() {
     const client = await getCloudClient();
+    const userId = cloudUser && cloudUser.id ? String(cloudUser.id) : "";
 
-    if (!client || !cloudUser) return;
+    if (!client || !userId) return;
 
     const states = await client
       .from("user_word_state")
       .select("*")
-      .eq("user_id", cloudUser.id);
+      .eq("user_id", userId);
 
     (states.data || []).forEach((row) => {
       cloudStates.set(row.word_id, row);
@@ -623,7 +624,7 @@ return String(word.word || "").slice(0, 2) + "\u00b7\u00b7\u00b7\u00b7";    }
     const memories = await client
       .from("memory_bank")
       .select("*")
-      .eq("user_id", cloudUser.id)
+      .eq("user_id", userId)
       .eq("memory_type", "word");
 
     (memories.data || []).forEach((row) => {
