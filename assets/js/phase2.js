@@ -2955,7 +2955,7 @@ return String(word.word || "").slice(0, 2) + "\u00b7\u00b7\u00b7\u00b7";    }
 
   let aiProgressSequence = 0;
 
-  function startAIProgress(container, moduleName, minimumMs = 3600) {
+  function startAIProgress(container, moduleName, minimumMs = 4900) {
     if (!container) {
       return { finish: async function () {} };
     }
@@ -2974,13 +2974,20 @@ return String(word.word || "").slice(0, 2) + "\u00b7\u00b7\u00b7\u00b7";    }
     container.setAttribute("aria-busy", "true");
     container.innerHTML = steps
       .map(function (label, index) {
-        const cells = Array(9)
-          .fill('<i aria-hidden="true"></i>')
+        const cellOrder = [0, 1, 2, 5, 8, 7, 6, 3, 4];
+        const cells = cellOrder
+          .map(function (cellIndex, orderIndex) {
+            return (
+              '<i aria-hidden="true" style="--cell-delay:' +
+              (orderIndex * 0.1).toFixed(1) +
+              's"></i>'
+            );
+          })
           .join("");
 
         return (
           '<div class="ai-progress-step" style="--step-delay:' +
-          (index * 0.72).toFixed(2) +
+          (index * 1.08).toFixed(2) +
           's">' +
           '<span class="ai-progress-icon" aria-hidden="true">' +
           '<span class="ai-progress-grid">' +
