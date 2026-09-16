@@ -1171,6 +1171,134 @@
     .tab-btn, .mode-tab, [data-tab] { transition: background 0.2s ease, color 0.2s ease; }
     .ai-loading { display:flex; align-items:center; gap:10px; padding:16px 0; font-size:14px; color:#666; }
     .ai-loading[hidden] { display:none; }
+    .ai-progress {
+      width:min(100%,360px);
+      margin:18px auto 8px;
+      padding:2px 0 4px;
+      flex-direction:column;
+      align-items:stretch;
+      gap:0;
+      overflow:hidden;
+      color:#303034;
+    }
+    .ai-progress.is-leaving { animation:ai-progress-out .18s ease forwards; }
+    .ai-progress-step {
+      --step-delay:0s;
+      --step-color:#B7793E;
+      position:relative;
+      display:grid;
+      grid-template-columns:28px minmax(0,1fr);
+      align-items:center;
+      column-gap:12px;
+      min-height:28px;
+      opacity:0;
+      transform:translateY(7px);
+      animation:ai-step-in .22s cubic-bezier(.22,.8,.36,1) var(--step-delay) both;
+    }
+    .ai-progress-step:nth-child(2) { --step-color:#5F7D6A; }
+    .ai-progress-step:nth-child(3) { --step-color:#A66767; }
+    .ai-progress-step:nth-child(4) { --step-color:#6F62A8; }
+    .ai-progress-step + .ai-progress-step { margin-top:20px; }
+    .ai-progress-step + .ai-progress-step::before {
+      content:"";
+      position:absolute;
+      top:-20px;
+      left:13.5px;
+      height:20px;
+      border-left:1px dashed rgba(0,0,0,.15);
+    }
+    .ai-progress-step + .ai-progress-step::after {
+      content:"";
+      position:absolute;
+      top:-20px;
+      left:14px;
+      width:1px;
+      height:20px;
+      background:rgba(38,38,42,.34);
+      transform:scaleY(0);
+      transform-origin:top;
+      animation:ai-line-complete .22s ease var(--step-delay) forwards;
+    }
+    .ai-progress-icon {
+      position:relative;
+      width:28px;
+      height:28px;
+      display:block;
+      color:#5F7D6A;
+    }
+    .ai-progress-grid {
+      position:absolute;
+      inset:0;
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:2px;
+      animation:ai-grid-out .24s ease calc(var(--step-delay) + .82s) forwards;
+    }
+    .ai-progress-grid i {
+      display:block;
+      border-radius:2px;
+      background:var(--step-color);
+      opacity:.42;
+      transform:scale(.82);
+      animation:ai-cell-pulse 1.2s ease-in-out calc(var(--step-delay) + var(--cell-delay,0s)) infinite;
+    }
+    .ai-progress-grid i:nth-child(2) { --cell-delay:.1s; }
+    .ai-progress-grid i:nth-child(3) { --cell-delay:.2s; }
+    .ai-progress-grid i:nth-child(4) { --cell-delay:.3s; }
+    .ai-progress-grid i:nth-child(5) { --cell-delay:.4s; }
+    .ai-progress-grid i:nth-child(6) { --cell-delay:.5s; }
+    .ai-progress-grid i:nth-child(7) { --cell-delay:.6s; }
+    .ai-progress-grid i:nth-child(8) { --cell-delay:.7s; }
+    .ai-progress-grid i:nth-child(9) { --cell-delay:.8s; }
+    .ai-progress-check {
+      position:absolute;
+      inset:0;
+      width:28px;
+      height:28px;
+      display:block;
+      opacity:0;
+      transform:scale(.82);
+      animation:ai-check-in .28s cubic-bezier(.22,.8,.36,1) calc(var(--step-delay) + .92s) forwards;
+    }
+    .ai-progress-label {
+      min-width:0;
+      color:#303034;
+      font-size:15px;
+      font-weight:500;
+      line-height:1.35;
+      letter-spacing:0;
+    }
+    @keyframes ai-step-in {
+      from { opacity:0; transform:translateY(7px); }
+      to { opacity:1; transform:none; }
+    }
+    @keyframes ai-cell-pulse {
+      0%,100% { opacity:.38; transform:scale(.82); }
+      50% { opacity:1; transform:scale(1); }
+    }
+    @keyframes ai-grid-out {
+      to { opacity:0; transform:scale(.88); }
+    }
+    @keyframes ai-check-in {
+      to { opacity:1; transform:scale(1); }
+    }
+    @keyframes ai-line-complete {
+      to { transform:scaleY(1); }
+    }
+    @keyframes ai-progress-out {
+      to { opacity:0; transform:translateY(-5px); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .ai-progress.is-leaving { animation:none; }
+      .ai-progress-step,
+      .ai-progress-grid,
+      .ai-progress-check,
+      .ai-progress-step + .ai-progress-step::after { animation:none; }
+      .ai-progress-step { opacity:1; transform:none; }
+      .ai-progress-grid { display:none; }
+      .ai-progress-check { opacity:1; transform:none; }
+      .ai-progress-step + .ai-progress-step::after { transform:scaleY(1); }
+    }
     .spinner { width:16px; height:16px; border:2px solid #ddd; border-top-color:#111; border-radius:50%; animation:spin .8s linear infinite; }
     @keyframes spin { to { transform:rotate(360deg); } }
     .assessment-panel { width:100%; box-sizing:border-box; margin:0 0 24px; padding:40px; border:1px solid #e5e5e7; border-radius:24px; background:#fff; color:#111; box-shadow:0 18px 48px rgba(0,0,0,.08); }
@@ -2839,7 +2967,7 @@
   <div id="sentencePrompt" class="prompt-card"></div>
   <textarea id="sentenceInput" placeholder="请根据提示词造句..."></textarea>
   <button type="button" id="submitSentence">提交造句</button>
-  <div class="ai-loading" id="sentenceLoading" hidden><span class="spinner"></span><span class="loading-text"></span></div>
+  <div class="ai-loading" id="sentenceLoading" hidden></div>
   <div id="sentenceFeedback" class="feedback-area" hidden></div>
 </div>
 <div id="translationPanel" class="translation-panel" hidden>
@@ -2853,7 +2981,7 @@
   <textarea id="translationInput" placeholder="请输入你的翻译..."></textarea>
   <button type="button" id="submitTranslation">提交翻译</button>
   <button type="button" id="nextTranslation" hidden>下一题</button>
-  <div class="ai-loading" id="translationLoading" hidden><span class="spinner"></span><span class="loading-text"></span></div>
+  <div class="ai-loading" id="translationLoading" hidden></div>
   <div id="translationFeedback" class="feedback-area" hidden></div>
 </div>
         </div>
@@ -2886,7 +3014,7 @@
               <div class="setting-row"><span id="writingCount">0 词</span><span></span></div>
               <button type="button" id="submitWriting">提交作文</button>
               <button type="button" id="changeWriting">换一题</button>
-              <div class="ai-loading" id="writingLoading" hidden><span class="spinner"></span><span class="loading-text">AI 正在批改...</span></div>
+              <div class="ai-loading" id="writingLoading" hidden></div>
               <div id="writingFeedback" class="feedback-area" hidden></div>
               <details id="writingReference" style="margin-top:18px"><summary>范文对照</summary><div id="writingReferenceBody" class="writing-reference"></div></details>
             </div>

@@ -2932,6 +2932,116 @@ return String(word.word || "").slice(0, 2) + "\u00b7\u00b7\u00b7\u00b7";    }
     return data?.result || data;
   }
 
+  const AI_PROGRESS_STEPS = {
+    sentence: [
+      "Thinking",
+      "Reading your sentence",
+      "Analyzing grammar & vocabulary",
+      "Generating feedback"
+    ],
+    translation: [
+      "Thinking",
+      "Reading your translation",
+      "Comparing with reference",
+      "Generating feedback"
+    ],
+    writing: [
+      "Thinking",
+      "Reading your essay",
+      "Analyzing structure & language",
+      "Generating feedback"
+    ]
+  };
+
+  let aiProgressSequence = 0;
+
+  function startAIProgress(container, moduleName, minimumMs = 3600) {
+    if (!container) {
+      return { finish: async function () {} };
+    }
+
+    const steps =
+      AI_PROGRESS_STEPS[moduleName] ||
+      AI_PROGRESS_STEPS.sentence;
+    const token = String(++aiProgressSequence);
+    const startedAt = performance.now();
+
+    container.dataset.progressToken = token;
+    container.classList.remove("is-leaving");
+    container.classList.add("ai-progress");
+    container.setAttribute("role", "status");
+    container.setAttribute("aria-live", "polite");
+    container.setAttribute("aria-busy", "true");
+    container.innerHTML = steps
+      .map(function (label, index) {
+        const cells = Array(9)
+          .fill('<i aria-hidden="true"></i>')
+          .join("");
+
+        return (
+          '<div class="ai-progress-step" style="--step-delay:' +
+          (index * 0.72).toFixed(2) +
+          's">' +
+          '<span class="ai-progress-icon" aria-hidden="true">' +
+          '<span class="ai-progress-grid">' +
+          cells +
+          "</span>" +
+          '<svg class="ai-progress-check" viewBox="0 0 28 28" fill="none">' +
+          '<circle cx="14" cy="14" r="11.5" stroke="currentColor" stroke-width="1.4"/>' +
+          '<path d="m9.2 14.2 3.1 3.2 6.6-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>' +
+          "</svg>" +
+          "</span>" +
+          '<span class="ai-progress-label">' +
+          escapeHtml(label) +
+          "</span>" +
+          "</div>"
+        );
+      })
+      .join("");
+    container.hidden = false;
+
+    let finished = false;
+
+    return {
+      finish: async function () {
+        if (finished || container.dataset.progressToken !== token) {
+          return;
+        }
+
+        finished = true;
+        const remaining = Math.max(
+          0,
+          minimumMs - (performance.now() - startedAt)
+        );
+
+        if (remaining > 0) {
+          await new Promise(function (resolve) {
+            setTimeout(resolve, remaining);
+          });
+        }
+
+        if (container.dataset.progressToken !== token) {
+          return;
+        }
+
+        container.classList.add("is-leaving");
+
+        await new Promise(function (resolve) {
+          setTimeout(resolve, 180);
+        });
+
+        if (container.dataset.progressToken !== token) {
+          return;
+        }
+
+        container.hidden = true;
+        container.classList.remove("is-leaving");
+        container.removeAttribute("aria-busy");
+        container.innerHTML = "";
+      }
+    };
+  }
+
   function renderSentenceResult(
     result,
     targetId = "quizFeedback"
@@ -3717,7 +3827,7 @@ return String(word.word || "").slice(0, 2) + "\u00b7\u00b7\u00b7\u00b7";    }
         const submit = document.getElementById("submitWriting");
         const loading = document.getElementById("writingLoading");
         if (submit) submit.disabled = true;
-        if (loading) loading.hidden = false;
+        const progress = startAIProgress(loading, "writing");
         try {
           const result = await callPhase2AI("grade_writing", {
             prompt: question.prompt || "",
@@ -3740,7 +3850,7 @@ return String(word.word || "").slice(0, 2) + "\u00b7\u00b7\u00b7\u00b7";    }
           if (currentWritingQuestion !== question) return;
           const feedback = document.getElementById("writingFeedback");
           if (feedback) { feedback.hidden = false; feedback.textContent = "\u0041\u0049 \u670d\u52a1\u6682\u65f6\u4e0d\u53ef\u7528\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5"; }
-        } finally { if (loading) loading.hidden = true; }
+        } finally { await progress.finish(); }
         return;
       }
       if (event.target.closest("#changeWriting")) { await loadRandomWritingQuestion(); return; }
@@ -3869,19 +3979,7 @@ return String(word.word || "").slice(0, 2) + "\u00b7\u00b7\u00b7\u00b7";    }
             "sentenceFeedback"
           );
 
-        const loadingText =
-          loading?.querySelector(
-            ".loading-text"
-          );
-
-        if (loading) {
-          loading.hidden = false;
-        }
-
-        if (loadingText) {
-          loadingText.textContent =
-            "\u0041\u0049 \u6b63\u5728\u5206\u6790\uff0c\u8bf7\u7a0d\u5019...";
-        }
+        const progress = startAIProgress(loading, "sentence");
 
         if (feedback) {
           feedback.hidden = true;
@@ -3890,13 +3988,6 @@ return String(word.word || "").slice(0, 2) + "\u00b7\u00b7\u00b7\u00b7";    }
         if (submit) {
           submit.disabled = true;
         }
-
-        const timer = setTimeout(() => {
-          if (loadingText) {
-            loadingText.textContent =
-              "\u0041\u0049 \u6b63\u5728\u601d\u8003\uff0c\u9a6c\u4e0a\u5c31\u597d...";
-          }
-        }, 3000);
 
         try {
           const result = await callPhase2AI(
@@ -3918,11 +4009,7 @@ return String(word.word || "").slice(0, 2) + "\u00b7\u00b7\u00b7\u00b7";    }
               "\u0041\u0049 \u670d\u52a1\u6682\u65f6\u4e0d\u53ef\u7528\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5";
           }
         } finally {
-          clearTimeout(timer);
-
-          if (loading) {
-            loading.hidden = true;
-          }
+          await progress.finish();
 
           if (submit) {
             submit.disabled = false;
@@ -3960,19 +4047,7 @@ return String(word.word || "").slice(0, 2) + "\u00b7\u00b7\u00b7\u00b7";    }
             "translationLoading"
           );
 
-        const loadingText =
-          loading?.querySelector(
-            ".loading-text"
-          );
-
-        if (loading) {
-          loading.hidden = false;
-        }
-
-        if (loadingText) {
-          loadingText.textContent =
-            "\u0041\u0049 \u6b63\u5728\u5206\u6790\uff0c\u8bf7\u7a0d\u5019...";
-        }
+        const progress = startAIProgress(loading, "translation");
 
         if (feedback) {
           feedback.hidden = true;
@@ -3981,13 +4056,6 @@ return String(word.word || "").slice(0, 2) + "\u00b7\u00b7\u00b7\u00b7";    }
         if (submit) {
           submit.disabled = true;
         }
-
-        const timer = setTimeout(() => {
-          if (loadingText) {
-            loadingText.textContent =
-              "\u0041\u0049 \u6b63\u5728\u601d\u8003\uff0c\u9a6c\u4e0a\u5c31\u597d...";
-          }
-        }, 3000);
 
         try {
           const result = await callPhase2AI(
@@ -4028,11 +4096,7 @@ return String(word.word || "").slice(0, 2) + "\u00b7\u00b7\u00b7\u00b7";    }
               "\u0041\u0049 \u670d\u52a1\u6682\u65f6\u4e0d\u53ef\u7528\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5";
           }
         } finally {
-          clearTimeout(timer);
-
-          if (loading) {
-            loading.hidden = true;
-          }
+          await progress.finish();
 
           if (submit) {
             submit.disabled = false;
