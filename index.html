@@ -2477,6 +2477,13 @@
         padding: 16px 14px 108px;
         border-radius: 22px;
       }
+      #view-reading.view #readingPanel,
+      #view-listening.view #listeningPanel {
+        padding-bottom: calc(218px + env(safe-area-inset-bottom));
+      }
+      #writingPanel {
+        padding-bottom: calc(162px + env(safe-area-inset-bottom));
+      }
       .exam-topbar {
         top: 6px;
         gap: 7px;
@@ -2551,13 +2558,22 @@
         line-height: 1.58;
       }
       .exam-pane-tabs {
-        position: sticky;
-        bottom: calc(92px + env(safe-area-inset-bottom));
-        z-index: 26;
-        margin: 16px -2px 14px;
-        background: rgba(239,239,243,.92);
-        -webkit-backdrop-filter: saturate(180%) blur(22px);
-        backdrop-filter: saturate(180%) blur(22px);
+        position: fixed;
+        left: 12px;
+        right: 12px;
+        bottom: calc(146px + env(safe-area-inset-bottom));
+        z-index: 28;
+        width: auto;
+        margin: 0;
+        border: 1px solid rgba(255,255,255,.58);
+        border-radius: 18px;
+        background: rgba(239,239,243,.82);
+        -webkit-backdrop-filter: saturate(190%) blur(28px);
+        backdrop-filter: saturate(190%) blur(28px);
+        box-shadow: 0 12px 34px rgba(0,0,0,.10), 0 1px 0 rgba(255,255,255,.82) inset;
+      }
+      #writingPanel .exam-pane-tabs {
+        bottom: calc(84px + env(safe-area-inset-bottom));
       }
       .exam-pane-tabs button { min-height: 44px; }
       #readingPanel .reading-article,
@@ -2579,11 +2595,20 @@
         line-height: 1.6;
       }
       .exam-question-nav {
-        position: sticky;
-        bottom: calc(148px + env(safe-area-inset-bottom));
-        z-index: 25;
-        margin: 18px -4px 0;
+        position: fixed;
+        left: 12px;
+        right: 12px;
+        bottom: calc(84px + env(safe-area-inset-bottom));
+        z-index: 27;
+        width: auto;
+        margin: 0;
         padding: 8px;
+        border: 1px solid rgba(255,255,255,.58);
+        border-radius: 18px;
+        background: rgba(250,250,252,.78);
+        -webkit-backdrop-filter: saturate(190%) blur(28px);
+        backdrop-filter: saturate(190%) blur(28px);
+        box-shadow: 0 12px 34px rgba(0,0,0,.10), 0 1px 0 rgba(255,255,255,.82) inset;
       }
       .exam-question-jump {
         flex-basis: 38px;
@@ -2803,14 +2828,22 @@
               <label><input type="radio" name="writingExamType" value="CET6" checked> CET6</label>
               <label><input type="radio" name="writingExamType" value="postgraduate"> 考研</label>
             </div>
-            <div class="prompt-card"><div id="writingPrompt" class="prompt-word prompt-sentence"></div><div id="writingHint" class="writing-hint" hidden></div><div id="writingWordRequirement" class="subtle" style="margin-top:12px">at least 120 words</div></div>
-            <textarea id="writingInput" placeholder="请输入你的作文..." style="min-height:220px;font-family:monospace"></textarea>
-            <div class="setting-row"><span id="writingCount">0 词</span><span></span></div>
-            <button type="button" id="submitWriting">提交作文</button>
-            <button type="button" id="changeWriting">换一题</button>
-            <div class="ai-loading" id="writingLoading" hidden><span class="spinner"></span><span class="loading-text">AI 正在批改...</span></div>
-            <div id="writingFeedback" class="feedback-area" hidden></div>
-            <details id="writingReference" style="margin-top:18px"><summary>范文对照</summary><div id="writingReferenceBody" class="writing-reference"></div></details>
+            <div class="exam-pane-tabs writing-pane-tabs" role="tablist" aria-label="Writing sections">
+              <button type="button" class="active" data-exam-pane="passage" data-exam-module="writing" role="tab" aria-selected="true">Prompt</button>
+              <button type="button" data-exam-pane="questions" data-exam-module="writing" role="tab" aria-selected="false">Response</button>
+            </div>
+            <div id="writingPromptPane" class="exam-pane">
+              <div class="prompt-card"><div id="writingPrompt" class="prompt-word prompt-sentence"></div><div id="writingHint" class="writing-hint" hidden></div><div id="writingWordRequirement" class="subtle" style="margin-top:12px">at least 120 words</div></div>
+            </div>
+            <div id="writingResponsePane" class="exam-pane" hidden>
+              <textarea id="writingInput" placeholder="请输入你的作文..." style="min-height:220px;font-family:monospace"></textarea>
+              <div class="setting-row"><span id="writingCount">0 词</span><span></span></div>
+              <button type="button" id="submitWriting">提交作文</button>
+              <button type="button" id="changeWriting">换一题</button>
+              <div class="ai-loading" id="writingLoading" hidden><span class="spinner"></span><span class="loading-text">AI 正在批改...</span></div>
+              <div id="writingFeedback" class="feedback-area" hidden></div>
+              <details id="writingReference" style="margin-top:18px"><summary>范文对照</summary><div id="writingReferenceBody" class="writing-reference"></div></details>
+            </div>
           </div>
         </div>
       </section>
@@ -4451,21 +4484,39 @@ eloquent|/ˈeləkwənt/|雄辩的；有说服力的|adj.|GRE|He gave an eloquent
       document.getElementById('signOutButton')?.addEventListener('click',signOut);
       document.getElementById('authPassword')?.addEventListener('keydown',e=>{if(e.key==='Enter')signIn()});
       /* Session comes from Supabase; learning actions write straight to Supabase, so there is no manual sync step. */
-      (async function bootSession(){
+      function applySessionUser(user){
+        currentUser=user||null;
+        showAuth(currentUser);
+        if(currentUser){
+          window.LearnHubPhase2?.loadCloudWordStates?.().catch(()=>{});
+          if(window.refreshVocabularyUI)window.refreshVocabularyUI({snapshot:'now'});
+        }
+      }
+      async function bootSession(){
+        if(!window.LearnHubPhase2||typeof window.LearnHubPhase2.getCloudClient!=='function'){
+          setTimeout(bootSession,0);
+          return;
+        }
+        let restoredUser=null;
         try {
           const client=await window.LearnHubPhase2.getCloudClient();
-          const res=client?await client.auth.getUser():null;
-          const user=res&&res.data&&res.data.user?res.data.user:null;
-          currentUser=user||null;
-          showAuth(currentUser);
-          if(currentUser){
-            window.LearnHubPhase2.loadCloudWordStates().catch(()=>{});
-            if(window.refreshVocabularyUI) window.refreshVocabularyUI({snapshot:'now'});
-          }
+          if(!client)return applySessionUser(null);
+          client.auth.onAuthStateChange((event,session)=>{
+            if(event==='SIGNED_OUT')return applySessionUser(null);
+            if(session&&session.user)applySessionUser(session.user);
+          });
+          const sessionResult=await client.auth.getSession();
+          const sessionUser=sessionResult&&sessionResult.data&&sessionResult.data.session&&sessionResult.data.session.user;
+          if(sessionUser){restoredUser=sessionUser;applySessionUser(sessionUser);}
+          const res=await client.auth.getUser();
+          const user=res&&res.data&&res.data.user?res.data.user:sessionUser||null;
+          applySessionUser(user);
         } catch (error) {
-          showAuth(null);
+          if(!restoredUser)applySessionUser(null);
         }
-      })();
+      }
+      if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bootSession,{once:true});
+      else bootSession();
     })();
   </script>
   <script src="assets/js/phase1.js"></script>

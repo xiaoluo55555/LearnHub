@@ -467,6 +467,7 @@ return String(word.word || "").slice(0, 2) + "\u00b7\u00b7\u00b7\u00b7";    }
   let lastTranslationQuestionId = null;
   let currentWritingQuestion = null;
   let lastWritingQuestionId = null;
+  let writingPane = "passage";
   let currentReadingQuestion = null;
   let lastReadingQuestionId = null;
   let readingAnswers = [];
@@ -1501,7 +1502,11 @@ return String(word.word || "").slice(0, 2) + "\u00b7\u00b7\u00b7\u00b7";    }
   }
 
   function renderExamPaneState(module) {
-    const pane = module === "reading" ? readingPane : listeningPane;
+    const pane = module === "reading"
+      ? readingPane
+      : module === "listening"
+        ? listeningPane
+        : writingPane;
     document
       .querySelectorAll(
         "[data-exam-pane][data-exam-module=\"" + module + "\"]"
@@ -1512,10 +1517,18 @@ return String(word.word || "").slice(0, 2) + "\u00b7\u00b7\u00b7\u00b7";    }
         button.setAttribute("aria-selected", active ? "true" : "false");
       });
     const passagePane = document.getElementById(
-      module === "reading" ? "readingPassagePane" : "listeningPassagePane"
+      module === "reading"
+        ? "readingPassagePane"
+        : module === "listening"
+          ? "listeningPassagePane"
+          : "writingPromptPane"
     );
     const questionsPane = document.getElementById(
-      module === "reading" ? "readingQuestionsPane" : "listeningQuestionsPane"
+      module === "reading"
+        ? "readingQuestionsPane"
+        : module === "listening"
+          ? "listeningQuestionsPane"
+          : "writingResponsePane"
     );
     if (passagePane) passagePane.hidden = pane !== "passage";
     if (questionsPane) questionsPane.hidden = pane !== "questions";
@@ -1525,6 +1538,7 @@ return String(word.word || "").slice(0, 2) + "\u00b7\u00b7\u00b7\u00b7";    }
     const next = pane === "questions" ? "questions" : "passage";
     if (module === "reading") readingPane = next;
     else if (module === "listening") listeningPane = next;
+    else if (module === "writing") writingPane = next;
     renderExamPaneState(module);
     applyExamHighlights(module);
   }
@@ -2973,6 +2987,7 @@ return String(word.word || "").slice(0, 2) + "\u00b7\u00b7\u00b7\u00b7";    }
     }
     renderExamPaneState("reading");
     renderExamPaneState("listening");
+    renderExamPaneState("writing");
     populateExamYears().catch((error) => {
       console.error("populateExamYears failed", error);
     });

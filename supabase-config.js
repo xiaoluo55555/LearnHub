@@ -20,6 +20,14 @@ window.LEARNHUB_SUPABASE = {
     return window.LEARNHUB_SUPABASE || {};
   }
 
+  function persistentStorage() {
+    try {
+      return window.localStorage || null;
+    } catch (error) {
+      return null;
+    }
+  }
+
   /* The supabase-js UMD bundle is fetched once, no matter how many modules ask. */
   function loadSdk() {
     if (window.supabase && typeof window.supabase.createClient === "function") return Promise.resolve();
@@ -43,7 +51,15 @@ window.LEARNHUB_SUPABASE = {
     var cfg = config();
     if (!window.supabase || typeof window.supabase.createClient !== "function") return null;
     if (!cfg.url || !cfg.anonKey) return null;
-    client = window.supabase.createClient(cfg.url, cfg.anonKey);
+    var auth = {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      storageKey: "sb-hzgywkarjqettdghydmo-auth-token"
+    };
+    var storage = persistentStorage();
+    if (storage) auth.storage = storage;
+    client = window.supabase.createClient(cfg.url, cfg.anonKey, { auth: auth });
     window.supabaseClient = client;
     return client;
   }
