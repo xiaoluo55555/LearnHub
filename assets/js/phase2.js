@@ -3869,29 +3869,43 @@ return String(word.word || "").slice(0, 2) + "\u00b7\u00b7\u00b7\u00b7";    }
         const loading = document.getElementById("writingLoading");
         if (submit) submit.disabled = true;
         const progress = startAIProgress(loading, "writing");
+        let result = null;
+        let requestFailed = false;
+
         try {
-          const result = await callPhase2AI("grade_writing", {
+          result = await callPhase2AI("grade_writing", {
             prompt: question.prompt || "",
             answer: question.answer || "",
             user_answer: input
           }, { questionId: question.id || null, module: "writing" });
-          if (currentWritingQuestion !== question) return;
-          renderWritingResult(result);
-          await recordQuestionOutcome({
-            module: "writing",
-            question,
-            sourceId: question.id || "",
-            isCorrect: Number(result?.total_score || 0) >= 9,
-            userAnswer: input,
-            correctAnswer: question.answer || "",
-            explanation: question.explanation || ""
-          });
-          const change = document.getElementById("changeWriting"); if (change) change.disabled = false;
         } catch (error) {
-          if (currentWritingQuestion !== question) return;
+          requestFailed = true;
+        }
+
+        await progress.finish();
+
+        if (currentWritingQuestion !== question) return;
+
+        if (result) {
+          renderWritingResult(result);
+          try {
+            await recordQuestionOutcome({
+              module: "writing",
+              question,
+              sourceId: question.id || "",
+              isCorrect: Number(result?.total_score || 0) >= 9,
+              userAnswer: input,
+              correctAnswer: question.answer || "",
+              explanation: question.explanation || ""
+            });
+          } catch (error) {}
+        } else if (requestFailed) {
           const feedback = document.getElementById("writingFeedback");
           if (feedback) { feedback.hidden = false; feedback.textContent = "\u0041\u0049 \u670d\u52a1\u6682\u65f6\u4e0d\u53ef\u7528\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5"; }
-        } finally { await progress.finish(); }
+        }
+
+        const change = document.getElementById("changeWriting");
+        if (change) change.disabled = false;
         return;
       }
       if (event.target.closest("#changeWriting")) { await loadRandomWritingQuestion(); return; }
@@ -4030,31 +4044,36 @@ return String(word.word || "").slice(0, 2) + "\u00b7\u00b7\u00b7\u00b7";    }
           submit.disabled = true;
         }
 
+        let result = null;
+        let requestFailed = false;
+
         try {
-          const result = await callPhase2AI(
+          result = await callPhase2AI(
             "grade_sentence",
             {
               word: sentenceWord.word,
               sentence
             }
           );
+        } catch {
+          requestFailed = true;
+        } finally {
+          await progress.finish();
+        }
 
+        if (result) {
           renderSentenceResult(
             result,
             "sentenceFeedback"
           );
-        } catch {
-          if (feedback) {
-            feedback.hidden = false;
-            feedback.textContent =
-              "\u0041\u0049 \u670d\u52a1\u6682\u65f6\u4e0d\u53ef\u7528\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5";
-          }
-        } finally {
-          await progress.finish();
+        } else if (requestFailed && feedback) {
+          feedback.hidden = false;
+          feedback.textContent =
+            "\u0041\u0049 \u670d\u52a1\u6682\u65f6\u4e0d\u53ef\u7528\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5";
+        }
 
-          if (submit) {
-            submit.disabled = false;
-          }
+        if (submit) {
+          submit.disabled = false;
         }
 
         return;
@@ -4098,8 +4117,11 @@ return String(word.word || "").slice(0, 2) + "\u00b7\u00b7\u00b7\u00b7";    }
           submit.disabled = true;
         }
 
+        let result = null;
+        let requestFailed = false;
+
         try {
-          const result = await callPhase2AI(
+          result = await callPhase2AI(
             "grade_translation",
             {
               prompt,
@@ -4109,7 +4131,13 @@ return String(word.word || "").slice(0, 2) + "\u00b7\u00b7\u00b7\u00b7";    }
             },
             { questionId: currentTranslationQuestion?.id || null, module: "translation" }
           );
+        } catch {
+          requestFailed = true;
+        } finally {
+          await progress.finish();
+        }
 
+        if (result) {
           if (feedback) {
             feedback.hidden = false;
             feedback.innerHTML = "<b>\u603b\u5206 " + escapeHtml(result.score ?? 0) + "</b>" +
@@ -4121,27 +4149,25 @@ return String(word.word || "").slice(0, 2) + "\u00b7\u00b7\u00b7\u00b7";    }
             const next = document.getElementById("nextTranslation");
             if (next) next.hidden = false;
           }
-          await recordQuestionOutcome({
-            module: "translation",
-            question: currentTranslationQuestion,
-            sourceId: currentTranslationQuestion?.id || "",
-            isCorrect: Number(result?.score || 0) >= 60,
-            userAnswer: userTranslation,
-            correctAnswer: currentTranslationQuestion?.answer || "",
-            explanation: currentTranslationQuestion?.explanation || ""
-          });
-        } catch {
-          if (feedback) {
-            feedback.hidden = false;
-            feedback.textContent =
-              "\u0041\u0049 \u670d\u52a1\u6682\u65f6\u4e0d\u53ef\u7528\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5";
-          }
-        } finally {
-          await progress.finish();
+          try {
+            await recordQuestionOutcome({
+              module: "translation",
+              question: currentTranslationQuestion,
+              sourceId: currentTranslationQuestion?.id || "",
+              isCorrect: Number(result?.score || 0) >= 60,
+              userAnswer: userTranslation,
+              correctAnswer: currentTranslationQuestion?.answer || "",
+              explanation: currentTranslationQuestion?.explanation || ""
+            });
+          } catch (error) {}
+        } else if (requestFailed && feedback) {
+          feedback.hidden = false;
+          feedback.textContent =
+            "\u0041\u0049 \u670d\u52a1\u6682\u65f6\u4e0d\u53ef\u7528\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5";
+        }
 
-          if (submit) {
-            submit.disabled = false;
-          }
+        if (submit) {
+          submit.disabled = false;
         }
       }
 
