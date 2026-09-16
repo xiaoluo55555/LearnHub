@@ -1169,8 +1169,15 @@
     .feedback-area { background:#f5f5f7; color:#222; }
     #sentenceFeedback,
     #translationFeedback,
-    #writingFeedback {
+    #writingFeedback,
+    #sentenceFeedback *,
+    #translationFeedback *,
+    #writingFeedback * {
       font-family:var(--font-claude-serif);
+    }
+    #sentenceFeedback,
+    #translationFeedback,
+    #writingFeedback {
       font-size:15px;
       font-weight:400;
       line-height:1.72;
@@ -1214,19 +1221,19 @@
       overflow:hidden;
       color:#303034;
     }
-    .ai-progress.is-leaving { animation:ai-progress-out .18s ease forwards; }
+    .ai-progress.is-leaving { animation:ai-progress-out .52s cubic-bezier(.4,0,.2,1) forwards; }
     .ai-progress-step {
       --step-delay:0s;
       --step-color:#B7793E;
       position:relative;
       display:grid;
-      grid-template-columns:28px minmax(0,1fr);
+      grid-template-columns:34px minmax(0,1fr);
       align-items:center;
       column-gap:12px;
-      min-height:28px;
+      min-height:34px;
       opacity:0;
-      transform:translateY(7px);
-      animation:ai-step-in .22s cubic-bezier(.22,.8,.36,1) var(--step-delay) both;
+      transform:translateY(11px);
+      animation:ai-step-in .48s cubic-bezier(.22,.8,.36,1) var(--step-delay) both;
     }
     .ai-progress-step:nth-child(2) { --step-color:#5F7D6A; }
     .ai-progress-step:nth-child(3) { --step-color:#A66767; }
@@ -1236,7 +1243,7 @@
       content:"";
       position:absolute;
       top:-20px;
-      left:13.5px;
+      left:16.5px;
       height:20px;
       border-left:1px dashed rgba(0,0,0,.15);
     }
@@ -1244,18 +1251,18 @@
       content:"";
       position:absolute;
       top:-20px;
-      left:14px;
+      left:17px;
       width:1px;
       height:20px;
       background:rgba(38,38,42,.34);
       transform:scaleY(0);
       transform-origin:top;
-      animation:ai-line-complete .22s ease var(--step-delay) forwards;
+      animation:ai-line-complete .72s cubic-bezier(.22,.8,.36,1) var(--step-delay) forwards;
     }
     .ai-progress-icon {
       position:relative;
-      width:28px;
-      height:28px;
+      width:34px;
+      height:34px;
       display:block;
       color:#5F7D6A;
     }
@@ -1264,28 +1271,111 @@
       inset:0;
       display:grid;
       grid-template-columns:repeat(3,1fr);
-      gap:2px;
-      animation:ai-grid-out .24s ease calc(var(--step-delay) + 1.68s) forwards;
+      gap:3px;
+      transform-origin:center;
+      animation:ai-grid-out .6s cubic-bezier(.4,0,.2,1) calc(var(--step-delay) + 2.22s) forwards;
     }
     .ai-progress-grid i {
+      --cell-tx:0px;
+      --cell-ty:0px;
       display:block;
+      position:relative;
+      z-index:2;
       border-radius:2px;
       background:var(--step-color);
-      opacity:.12;
-      transform:scale(.42);
-      animation:ai-cell-orbit 1.05s cubic-bezier(.22,.8,.36,1) calc(var(--step-delay) + var(--cell-delay,0s)) infinite;
+      opacity:.1;
+      transform:scale(.34);
+      box-shadow:0 0 7px transparent;
+      animation:ai-cell-orbit 1.85s cubic-bezier(.38,.05,.2,1) calc(var(--step-delay) + var(--cell-delay,0s)) infinite;
       animation-play-state:running;
+      will-change:opacity,transform,box-shadow;
+    }
+    .ai-progress-core {
+      position:absolute;
+      top:50%;
+      left:50%;
+      z-index:3;
+      width:8px;
+      height:8px;
+      margin:-4px 0 0 -4px;
+      border-radius:50%;
+      background:var(--step-color);
+      opacity:0;
+      transform:scale(.12);
+      box-shadow:
+        0 0 5px var(--step-color),
+        0 0 13px var(--step-color),
+        0 0 22px rgba(255,255,255,.62);
+      animation:ai-core-form 1.28s cubic-bezier(.22,.8,.36,1) calc(var(--step-delay) + 1.72s) both;
+      will-change:opacity,transform;
+    }
+    .ai-progress-core::before {
+      content:"";
+      position:absolute;
+      inset:-8px;
+      border:1px solid var(--step-color);
+      border-radius:50%;
+      opacity:0;
+      transform:scale(.46);
+      animation:ai-core-ring 1.18s cubic-bezier(.22,.8,.36,1) calc(var(--step-delay) + 1.66s) both;
+    }
+    .ai-progress-core::after {
+      content:"";
+      position:absolute;
+      inset:2px;
+      border-radius:inherit;
+      background:#fff;
+      opacity:.72;
+      filter:blur(.3px);
+    }
+    .ai-progress-particles {
+      position:absolute;
+      inset:0;
+      z-index:4;
+      pointer-events:none;
+    }
+    .ai-progress-particle {
+      --particle-distance:11px;
+      --particle-size:2px;
+      --particle-delay:0s;
+      position:absolute;
+      top:50%;
+      left:50%;
+      width:var(--particle-size);
+      height:var(--particle-size);
+      margin:0;
+      border-radius:50%;
+      background:var(--step-color);
+      opacity:0;
+      transform:
+        translate(-50%,-50%)
+        rotate(var(--particle-angle))
+        translateX(2px)
+        scale(.18);
+      animation:ai-particle-flight .94s cubic-bezier(.18,.72,.24,1) calc(var(--step-delay) + 1.82s + var(--particle-delay)) both;
       will-change:opacity,transform;
     }
     .ai-progress-check {
       position:absolute;
       inset:0;
-      width:28px;
-      height:28px;
+      z-index:5;
+      width:34px;
+      height:34px;
       display:block;
       opacity:0;
-      transform:scale(.82);
-      animation:ai-check-in .28s cubic-bezier(.22,.8,.36,1) calc(var(--step-delay) + 1.8s) forwards;
+      transform:scale(.76);
+      animation:ai-check-in .46s cubic-bezier(.22,.8,.36,1) calc(var(--step-delay) + 2.78s) both;
+    }
+    .ai-progress-check circle {
+      opacity:0;
+      transform:scale(.76);
+      transform-origin:center;
+      animation:ai-check-ring-in .46s cubic-bezier(.22,.8,.36,1) calc(var(--step-delay) + 2.78s) both;
+    }
+    .ai-progress-check path {
+      stroke-dasharray:18;
+      stroke-dashoffset:18;
+      animation:ai-check-draw .58s cubic-bezier(.22,.8,.36,1) calc(var(--step-delay) + 2.94s) both;
     }
     .ai-progress-label {
       min-width:0;
@@ -1300,47 +1390,132 @@
       to { opacity:1; transform:none; }
     }
     @keyframes ai-cell-orbit {
-      0%,100% { opacity:.12; transform:scale(.42); }
-      12% { opacity:.72; transform:scale(.88); }
-      24% { opacity:1; transform:scale(1.12); }
-      40% { opacity:.68; transform:scale(.94); }
-      58% { opacity:.16; transform:scale(.52); }
+      0% {
+        opacity:.1;
+        box-shadow:0 0 0 transparent;
+        transform:translate(0,0) scale(.34);
+      }
+      18% {
+        opacity:.78;
+        box-shadow:0 0 5px var(--step-color);
+        transform:translate(var(--cell-tx),var(--cell-ty)) scale(.82);
+      }
+      34% {
+        opacity:1;
+        box-shadow:0 0 9px var(--step-color);
+        transform:translate(var(--cell-tx),var(--cell-ty)) scale(1.06);
+      }
+      52% {
+        opacity:.76;
+        box-shadow:0 0 5px var(--step-color);
+        transform:translate(var(--cell-tx),var(--cell-ty)) scale(.88);
+      }
+      74% {
+        opacity:.24;
+        box-shadow:0 0 0 transparent;
+        transform:translate(0,0) scale(.62);
+      }
+      100% {
+        opacity:.1;
+        box-shadow:0 0 0 transparent;
+        transform:translate(0,0) scale(.34);
+      }
     }
     @keyframes ai-grid-out {
-      to { opacity:0; transform:scale(.88); }
+      0% { opacity:1; transform:scale(1); filter:blur(0); }
+      100% { opacity:0; transform:scale(.72); filter:blur(1.4px); }
+    }
+    @keyframes ai-core-form {
+      0% { opacity:0; transform:scale(.12); }
+      18% { opacity:.56; transform:scale(.54); }
+      38% { opacity:1; transform:scale(1.14); }
+      58% { opacity:.94; transform:scale(.9); }
+      76% { opacity:1; transform:scale(1.04); }
+      100% { opacity:0; transform:scale(.28); }
+    }
+    @keyframes ai-core-ring {
+      0% { opacity:0; transform:scale(.38); }
+      26% { opacity:.72; transform:scale(.76); }
+      58% { opacity:.34; transform:scale(1.22); }
+      82% { opacity:.62; transform:scale(.94); }
+      100% { opacity:0; transform:scale(1.48); }
+    }
+    @keyframes ai-particle-flight {
+      0% {
+        opacity:0;
+        transform:translate(-50%,-50%) rotate(var(--particle-angle)) translateX(2px) scale(.18);
+      }
+      16% {
+        opacity:.84;
+        transform:translate(-50%,-50%) rotate(var(--particle-angle)) translateX(var(--particle-distance)) scale(.86);
+      }
+      42% {
+        opacity:1;
+        transform:translate(-50%,-50%) rotate(var(--particle-angle)) translateX(var(--particle-distance)) scale(1);
+      }
+      68% {
+        opacity:.7;
+        transform:translate(-50%,-50%) rotate(var(--particle-angle)) translateX(var(--particle-distance)) scale(.72);
+      }
+      100% {
+        opacity:0;
+        transform:translate(-50%,-50%) rotate(var(--particle-angle)) translateX(3px) scale(.16);
+      }
     }
     @keyframes ai-check-in {
-      to { opacity:1; transform:scale(1); }
+      0% { opacity:0; transform:scale(.74); }
+      62% { opacity:1; transform:scale(1.04); }
+      100% { opacity:1; transform:scale(1); }
+    }
+    @keyframes ai-check-ring-in {
+      0% { opacity:0; transform:scale(.76); }
+      58% { opacity:.46; transform:scale(1.06); }
+      100% { opacity:.72; transform:scale(1); }
+    }
+    @keyframes ai-check-draw {
+      to { stroke-dashoffset:0; }
     }
     @keyframes ai-line-complete {
       to { transform:scaleY(1); }
     }
     @keyframes ai-progress-out {
-      to { opacity:0; transform:translateY(-5px); }
+      0% { opacity:1; transform:translateY(0) scale(1); filter:blur(0); }
+      100% { opacity:0; transform:translateY(-9px) scale(.985); filter:blur(1.5px); }
     }
     @media (prefers-reduced-motion: reduce) {
       .ai-progress.is-leaving { animation:none; }
       .ai-progress-step {
         opacity:1;
         transform:none;
-        animation:ai-step-in .22s cubic-bezier(.22,.8,.36,1) var(--step-delay) both !important;
+        animation:ai-step-in .38s cubic-bezier(.22,.8,.36,1) var(--step-delay) both !important;
       }
       .ai-progress-grid {
-        animation:ai-grid-out .24s ease calc(var(--step-delay) + 1.68s) forwards !important;
+        animation:ai-grid-out .4s ease calc(var(--step-delay) + 2.22s) forwards !important;
       }
       .ai-progress-grid i {
         animation-name:ai-cell-orbit-reduced !important;
-        animation-duration:1.35s !important;
+        animation-duration:1.7s !important;
         animation-timing-function:cubic-bezier(.22,.8,.36,1) !important;
         animation-iteration-count:infinite !important;
         animation-play-state:running !important;
       }
+      .ai-progress-core,
+      .ai-progress-core::before,
+      .ai-progress-particle {
+        animation:none !important;
+      }
       .ai-progress-check {
-        animation:ai-check-in .28s cubic-bezier(.22,.8,.36,1) calc(var(--step-delay) + 1.8s) forwards !important;
+        animation:ai-check-in .36s cubic-bezier(.22,.8,.36,1) calc(var(--step-delay) + 2.78s) both !important;
+      }
+      .ai-progress-check circle {
+        animation:ai-check-ring-in .36s cubic-bezier(.22,.8,.36,1) calc(var(--step-delay) + 2.78s) both !important;
+      }
+      .ai-progress-check path {
+        animation:ai-check-draw .44s cubic-bezier(.22,.8,.36,1) calc(var(--step-delay) + 2.9s) both !important;
       }
       .ai-progress-step + .ai-progress-step::after {
         transform:scaleY(0);
-        animation:ai-line-complete .22s ease var(--step-delay) forwards !important;
+        animation:ai-line-complete .48s ease var(--step-delay) forwards !important;
       }
     }
     @keyframes ai-cell-orbit-reduced {
@@ -4745,7 +4920,7 @@ eloquent|/ˈeləkwənt/|雄辩的；有说服力的|adj.|GRE|He gave an eloquent
   </script>
   <script src="assets/js/phase1.js"></script>
   <script src="assets/js/fsrs.js"></script>
-  <script src="assets/js/phase2.js?v=20260916-ai-loader"></script>
+  <script src="assets/js/phase2.js?v=20260916-ai-loader-breath"></script>
   <script src="assets/js/phase4.js"></script>
   <script src="assets/js/phase4-profile.js"></script>
   <script>

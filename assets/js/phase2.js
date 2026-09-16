@@ -2955,7 +2955,7 @@ return String(word.word || "").slice(0, 2) + "\u00b7\u00b7\u00b7\u00b7";    }
 
   let aiProgressSequence = 0;
 
-  function startAIProgress(container, moduleName, minimumMs = 5800) {
+  function startAIProgress(container, moduleName, minimumMs = 11600) {
     if (!container) {
       return { finish: async function () {} };
     }
@@ -2977,9 +2977,39 @@ return String(word.word || "").slice(0, 2) + "\u00b7\u00b7\u00b7\u00b7";    }
         const cellOrder = [0, 1, 2, 5, 8, 7, 6, 3, 4];
         const cells = cellOrder
           .map(function (cellIndex, orderIndex) {
+            const cellX = cellIndex % 3;
+            const cellY = Math.floor(cellIndex / 3);
+            const translateX = (1 - cellX) * 11;
+            const translateY = (1 - cellY) * 11;
+
             return (
               '<i aria-hidden="true" style="--cell-delay:' +
-              (orderIndex * 0.07).toFixed(2) +
+              (orderIndex * 0.12).toFixed(2) +
+              's;--cell-tx:' +
+              translateX +
+              'px;--cell-ty:' +
+              translateY +
+              'px"></i>'
+            );
+          })
+          .join("");
+        const particles = Array.from({ length: 12 })
+          .map(function (_, particleIndex) {
+            const angle = particleIndex * 30 - 90;
+            const distance = 9 + (particleIndex % 3) * 1.5;
+            const size = 1.4 + (particleIndex % 4) * 0.28;
+            const delay = (particleIndex % 6) * 0.026;
+
+            return (
+              '<i class="ai-progress-particle" aria-hidden="true" style="' +
+              "--particle-angle:" +
+              angle +
+              "deg;--particle-distance:" +
+              distance +
+              "px;--particle-size:" +
+              size.toFixed(2) +
+              "px;--particle-delay:" +
+              delay.toFixed(3) +
               's"></i>'
             );
           })
@@ -2987,11 +3017,15 @@ return String(word.word || "").slice(0, 2) + "\u00b7\u00b7\u00b7\u00b7";    }
 
         return (
           '<div class="ai-progress-step" style="--step-delay:' +
-          (index * 1.15).toFixed(2) +
+          (index * 2.65).toFixed(2) +
           's">' +
           '<span class="ai-progress-icon" aria-hidden="true">' +
           '<span class="ai-progress-grid">' +
           cells +
+          "</span>" +
+          '<span class="ai-progress-core"></span>' +
+          '<span class="ai-progress-particles">' +
+          particles +
           "</span>" +
           '<svg class="ai-progress-check" viewBox="0 0 28 28" fill="none">' +
           '<circle cx="14" cy="14" r="11.5" stroke="currentColor" stroke-width="1.4"/>' +
@@ -3034,7 +3068,7 @@ return String(word.word || "").slice(0, 2) + "\u00b7\u00b7\u00b7\u00b7";    }
         container.classList.add("is-leaving");
 
         await new Promise(function (resolve) {
-          setTimeout(resolve, 180);
+          setTimeout(resolve, 520);
         });
 
         if (container.dataset.progressToken !== token) {
