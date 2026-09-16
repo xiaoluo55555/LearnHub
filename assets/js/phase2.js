@@ -2955,7 +2955,7 @@ return String(word.word || "").slice(0, 2) + "\u00b7\u00b7\u00b7\u00b7";    }
 
   let aiProgressSequence = 0;
 
-  function startAIProgress(container, moduleName, minimumMs = 4900) {
+  function startAIProgress(container, moduleName, minimumMs = 5800) {
     if (!container) {
       return { finish: async function () {} };
     }
@@ -2979,7 +2979,7 @@ return String(word.word || "").slice(0, 2) + "\u00b7\u00b7\u00b7\u00b7";    }
           .map(function (cellIndex, orderIndex) {
             return (
               '<i aria-hidden="true" style="--cell-delay:' +
-              (orderIndex * 0.1).toFixed(1) +
+              (orderIndex * 0.07).toFixed(2) +
               's"></i>'
             );
           })
@@ -2987,7 +2987,7 @@ return String(word.word || "").slice(0, 2) + "\u00b7\u00b7\u00b7\u00b7";    }
 
         return (
           '<div class="ai-progress-step" style="--step-delay:' +
-          (index * 1.08).toFixed(2) +
+          (index * 1.15).toFixed(2) +
           's">' +
           '<span class="ai-progress-icon" aria-hidden="true">' +
           '<span class="ai-progress-grid">' +

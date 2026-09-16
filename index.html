@@ -1265,15 +1265,16 @@
       display:grid;
       grid-template-columns:repeat(3,1fr);
       gap:2px;
-      animation:ai-grid-out .24s ease calc(var(--step-delay) + 1.18s) forwards;
+      animation:ai-grid-out .24s ease calc(var(--step-delay) + 1.68s) forwards;
     }
     .ai-progress-grid i {
       display:block;
       border-radius:2px;
       background:var(--step-color);
-      opacity:.16;
-      transform:scale(.5);
-      animation:ai-cell-orbit 1.05s cubic-bezier(.4,0,.2,1) calc(var(--step-delay) + var(--cell-delay,0s)) infinite;
+      opacity:.12;
+      transform:scale(.42);
+      animation:ai-cell-orbit 1.05s cubic-bezier(.22,.8,.36,1) calc(var(--step-delay) + var(--cell-delay,0s)) infinite;
+      animation-play-state:running;
       will-change:opacity,transform;
     }
     .ai-progress-check {
@@ -1284,7 +1285,7 @@
       display:block;
       opacity:0;
       transform:scale(.82);
-      animation:ai-check-in .28s cubic-bezier(.22,.8,.36,1) calc(var(--step-delay) + 1.27s) forwards;
+      animation:ai-check-in .28s cubic-bezier(.22,.8,.36,1) calc(var(--step-delay) + 1.8s) forwards;
     }
     .ai-progress-label {
       min-width:0;
@@ -1299,10 +1300,11 @@
       to { opacity:1; transform:none; }
     }
     @keyframes ai-cell-orbit {
-      0%,100% { opacity:.14; transform:scale(.5); }
-      16% { opacity:1; transform:scale(1.08); }
-      30% { opacity:.64; transform:scale(.9); }
-      48% { opacity:.16; transform:scale(.5); }
+      0%,100% { opacity:.12; transform:scale(.42); }
+      12% { opacity:.72; transform:scale(.88); }
+      24% { opacity:1; transform:scale(1.12); }
+      40% { opacity:.68; transform:scale(.94); }
+      58% { opacity:.16; transform:scale(.52); }
     }
     @keyframes ai-grid-out {
       to { opacity:0; transform:scale(.88); }
@@ -1318,14 +1320,34 @@
     }
     @media (prefers-reduced-motion: reduce) {
       .ai-progress.is-leaving { animation:none; }
-      .ai-progress-step,
-      .ai-progress-grid,
-      .ai-progress-check,
-      .ai-progress-step + .ai-progress-step::after { animation:none; }
-      .ai-progress-step { opacity:1; transform:none; }
-      .ai-progress-grid { display:none; }
-      .ai-progress-check { opacity:1; transform:none; }
-      .ai-progress-step + .ai-progress-step::after { transform:scaleY(1); }
+      .ai-progress-step {
+        opacity:1;
+        transform:none;
+        animation:ai-step-in .22s cubic-bezier(.22,.8,.36,1) var(--step-delay) both !important;
+      }
+      .ai-progress-grid {
+        animation:ai-grid-out .24s ease calc(var(--step-delay) + 1.68s) forwards !important;
+      }
+      .ai-progress-grid i {
+        animation-name:ai-cell-orbit-reduced !important;
+        animation-duration:1.35s !important;
+        animation-timing-function:cubic-bezier(.22,.8,.36,1) !important;
+        animation-iteration-count:infinite !important;
+        animation-play-state:running !important;
+      }
+      .ai-progress-check {
+        animation:ai-check-in .28s cubic-bezier(.22,.8,.36,1) calc(var(--step-delay) + 1.8s) forwards !important;
+      }
+      .ai-progress-step + .ai-progress-step::after {
+        transform:scaleY(0);
+        animation:ai-line-complete .22s ease var(--step-delay) forwards !important;
+      }
+    }
+    @keyframes ai-cell-orbit-reduced {
+      0%,100% { opacity:.24; transform:scale(.68); }
+      18% { opacity:.78; transform:scale(.92); }
+      32% { opacity:1; transform:scale(1.04); }
+      52% { opacity:.38; transform:scale(.78); }
     }
     .spinner { width:16px; height:16px; border:2px solid #ddd; border-top-color:#111; border-radius:50%; animation:spin .8s linear infinite; }
     @keyframes spin { to { transform:rotate(360deg); } }
